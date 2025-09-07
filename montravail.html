@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIA-CG</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+    <!-- Favicon moderne -->
+    <link rel="icon" href="assets/img/nav-logo_1.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="images/logo/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+
+    <style>
+        :root {
+            --primary: #00C896; /* Cyan moderne */
+            --primary-dark: #00A47A;
+            --secondary: #0F0A3C; /* Bleu nuit profond */
+            --secondary-light: #1E1659;
+            --accent: #FF6B6B; /* Corail dynamique */
+            --accent-dark: #E05555;
+            --light: #F8F9FF; /* Blanc bleuté */
+            --dark: #0A0A1A;
+            --gradient: linear-gradient(135deg, var(--primary) 0%, #6E45E2 100%); /* Gradient futuriste */
+            --gradient-dark: linear-gradient(135deg, var(--primary-dark) 0%, #4D30B2 100%);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        @font-face {
+            font-family: 'Inter';
+            src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Particles Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Header Neuromorphe */
+        header {
+            background: rgba(15, 10, 60, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        header.scrolled {
+            background: rgba(15, 10, 60, 0.95);
+            padding: 12px 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 42px;
+            margin-right: 12px;
+            filter: drop-shadow(0 0 8px rgba(0, 200, 150, 0.4));
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 32px;
+            position: relative;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            position: relative;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            bottom: -6px;
+            left: 0;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-links a:hover {
+            color: white;
+        }
+
+        .nav-links a:hover::before {
+            width: 100%;
+        }
+
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            color: white;
+            font-size: 1.8rem;
+            z-index: 1001;
+        }
+
+        /* Hero Section Futuriste */
+        .hero {
+            height: 100vh;
+            min-height: 800px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--secondary);
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1685&q=80') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .hero-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 5%;
+            position: relative;
+            z-index: 2;
+            color: white;
+            width: 100%;
+            padding-top: 100px;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            line-height: 1.2;
+            font-weight: 700;
+            background: linear-gradient(90deg, #FFFFFF 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+
+        .hero-content p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient);
+            color: white;
+            padding: 16px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 200, 150, 0.3);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-dark);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .cta-button:hover::after {
+            opacity: 1;
+        }
+
+        .cta-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            box-shadow: none;
+        }
+
+        .cta-button.secondary:hover {
+            background: rgba(0, 200, 150, 0.1);
+        }
+
+        .hero-ai-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .ai-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0.7;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        .ai-connection {
+            position: absolute;
+            background: rgba(0, 200, 150, 0.1);
+            border: 1px solid rgba(0, 200, 150, 0.3);
+            border-radius: 50%;
+            animation: pulse 8s infinite ease-in-out;
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.8rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+            z-index: 2;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .scroll-down:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 120px 5%;
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 80px;
+            position: relative;
+        }
+
+        .section-title h2 {
+            font-size: 2.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-title p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 4px;
+            background: var(--gradient);
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* About Section */
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 80px;
+        }
+
+        .about-text {
+            flex: 1;
+        }
+
+        .about-text h3 {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 25px;
+            line-height: 1.3;
+        }
+
+        .about-text p {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eee;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-number i {
+            margin-right: 15px;
+            font-size: 1.8rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .about-image {
+            flex: 1;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            height: 600px;
+        }
+
+        .about-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .about-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .tech-badge {
+            position: absolute;
+            background: var(--gradient);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            animation: float 4s infinite ease-in-out;
+        }
+
+        .badge-1 {
+            top: 10%;
+            left: -20px;
+            animation-delay: 0s;
+        }
+
+        .badge-2 {
+            bottom: 15%;
+            right: -20px;
+            animation-delay: 0.5s;
+        }
+
+        /* Services Section */
+        .services {
+            background-color: #f8f9ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .services::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80') center/cover;
+            opacity: 0.03;
+            z-index: 0;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(50px);
+            opacity: 0;
+            border: 1px solid #eee;
+        }
+
+        .service-card.animated {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px) !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-icon {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            color: var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-icon::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 200, 150, 0.1);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+
+        .service-content {
+            padding: 40px;
+        }
+
+        .service-content h3 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .service-content p {
+            margin-bottom: 25px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tech-tag {
+            background: rgba(0, 200, 150, 0.1);
+            color: var(--primary-dark);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .learn-more {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .learn-more i {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .learn-more:hover {
+            color: var(--primary-dark);
+        }
+
+        .learn-more:hover i {
+            transform: translateX(5px);
+        }
+
+        /* AI Showcase Section */
+        .ai-showcase {
+            background: var(--secondary);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-showcase::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1677442135136-760c813a743d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .ai-showcase .section-title h2 {
+            background: linear-gradient(90deg, #FFFFFF 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .ai-showcase .section-title::after {
+            background: white;
+        }
+
+        .ai-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-feature {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+        }
+
+        .ai-feature:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .ai-feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .ai-feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .ai-feature p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.8;
+        }
+
+        /* Partners Section */
+        .partners {
+            background: #f8f9ff;
+        }
+
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .partner-logo {
+            filter: grayscale(100%);
+            opacity: 0.7;
+            transition: all 0.4s ease;
+            max-width: 160px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+
+        .partner-logo:hover {
+            filter: grayscale(0%);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Products Section */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #eee;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .product-image {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.1);
+        }
+
+        .product-content {
+            padding: 30px;
+        }
+
+        .product-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+
+        .product-content p {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .product-price {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.4rem;
+        }
+
+        .product-rating {
+            color: #FFC107;
+        }
+
+        .add-to-cart {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .add-to-cart:hover {
+            background: var(--gradient-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 200, 150, 0.3);
+        }
+
+        .add-to-cart i {
+            margin-right: 8px;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            background: var(--gradient-dark);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonials::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80') center/cover;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .testimonials .section-title h2 {
+            background: linear-gradient(90deg, #FFFFFF 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .testimonials .section-title::after {
+            background: white;
+        }
+
+        .testimonial-slider {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .testimonial {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 0 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .testimonial.active {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .testimonial-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .testimonial-text {
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            position: relative;
+        }
+
+        .testimonial-text::before,
+        .testimonial-text::after {
+            content: '"';
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.2);
+            position: absolute;
+        }
+
+        .testimonial-text::before {
+            top: -20px;
+            left: -30px;
+        }
+
+        .testimonial-text::after {
+            bottom: -40px;
+            right: -30px;
+        }
+
+        .testimonial-author {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .testimonial-position {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .testimonial-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .testimonial-dot {
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            margin: 0 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-dot.active {
+            background: white;
+            transform: scale(1.3);
+        }
+
+        /* Contact Section */
+        .contact {
+            background-color: #f8f9ff;
+        }
+
+        .contact-container {
+            display: flex;
+            gap: 60px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-info h3 {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 25px;
+            line-height: 1.3;
+        }
+
+        .contact-info p {
+            margin-bottom: 30px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .contact-details {
+            margin-bottom: 40px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .contact-icon {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-right: 20px;
+            margin-top: 5px;
+            min-width: 24px;
+        }
+
+        .contact-text h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: var(--secondary);
+        }
+
+        .contact-text p {
+            margin: 0;
+            color: #666;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 50%;
+            color: var(--primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            font-size: 1.2rem;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        .contact-form {
+            flex: 1;
+            background: white;
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 200, 150, 0.2);
+            background: white;
+        }
+
+        textarea.form-control {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-size: 1rem;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 200, 150, 0.3);
+        }
+
+        .submit-btn:hover {
+            background: var(--gradient-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 200, 150, 0.4);
+        }
+
+        /* Map Section */
+        .map-section {
+            padding: 0;
+            height: 500px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--secondary);
+            color: white;
+            padding: 100px 5% 50px;
+            position: relative;
+        }
+
+        .footer-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 60px;
+            margin-bottom: 70px;
+        }
+
+        .footer-col h3 {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .footer-col h3::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: var(--primary);
+            bottom: 0;
+            left: 0;
+        }
+
+        .footer-col p {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            opacity: 0.8;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            transform: translateX(8px);
+            color: var(--primary);
+        }
+
+        .footer-newsletter input {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .footer-newsletter input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .footer-newsletter button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .footer-newsletter button:hover {
+            background: var(--primary-dark);
+        }
+
+        .footer-bottom {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-bottom p {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .footer-legal-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-legal-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.7;
+            font-size: 0.9rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-legal-links a:hover {
+            opacity: 1;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-to-top.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            background: var(--gradient-dark);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-20px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.9;
+            }
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .hero-content h1 {
+                font-size: 3.2rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2.4rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .about-content {
+                flex-direction: column;
+            }
+            
+            .about-image {
+                width: 100%;
+                height: 400px;
+            }
+            
+            .contact-container {
+                flex-direction: column;
+            }
+            
+            .footer-container {
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: var(--secondary);
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 100px 40px 40px;
+                transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 1000;
+            }
+            
+            .nav-links.active {
+                left: 0;
+            }
+            
+            .nav-links li {
+                margin: 15px 0;
+            }
+            
+            .hero-content h1 {
+                font-size: 2.8rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .service-card, .ai-feature {
+                padding: 30px;
+            }
+            
+            .testimonial {
+                padding: 30px 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero-content p {
+                font-size: 1.1rem;
+            }
+            
+            .section {
+                padding: 80px 5%;
+            }
+            
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+            
+            .services-grid, .ai-features, .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-col {
+                min-width: 100%;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-legal-links {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles Background -->
+    <div class="particles" id="particles-js"></div>
+
+    <!-- Header -->
+    <header id="header">
+        <nav class="navbar">
+            <a href="#" class="logo">
+                <img src="assets/img/nav-logo_1.png" alt="FIA-CG Logo">
+            </a>
+            <div class="menu-toggle" id="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#home">Accueil</a></li>
+                <li><a href="#about">À propos</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#ai">Solutions IA</a></li>
+                <li><a href="#products">Produits</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-bg"></div>
+        <div class="hero-ai-elements" id="ai-elements"></div>
+        <div class="hero-content">
+            <h1>L'innovation technologique au service de votre entreprise</h1>
+            <p>FIA-CG combine intelligence artificielle, analyse de données et expertise technique pour propulser votre entreprise vers l'avenir.</p>
+            <div class="hero-buttons">
+                <a href="#contact" class="cta-button"><span>Démarrer un projet</span></a>
+                <a href="#services" class="cta-button secondary"><span>Découvrir nos services</span></a>
+            </div>
+        </div>
+        <div class="scroll-down" id="scroll-down">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="section-title">
+            <h2>À propos de nous</h2>
+            <p>Découvrez ce qui fait de FIA-CG un partenaire technologique de premier plan</p>
+        </div>
+        <div class="about-content">
+            <div class="about-text">
+                <h3>Transformer les défis technologiques en opportunités stratégiques</h3>
+                <p>Fondée en 2010, FIA-CG s'est rapidement imposée comme un leader dans le domaine des solutions technologiques avancées. Notre mission est d'accompagner les entreprises dans leur transformation numérique grâce à des solutions sur mesure combinant IA, big data et technologies cloud.</p>
+                <p>Notre équipe de plus de 150 experts travaille sans relâche pour développer des produits et services qui redéfinissent les standards industriels et créent une réelle valeur ajoutée pour nos clients.</p>
+                
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <div class="stat-number"><i class="fas fa-users"></i>150+</div>
+                        <div class="stat-label">Experts techniques</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><i class="fas fa-project-diagram"></i>500+</div>
+                        <div class="stat-label">Projets réalisés</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><i class="fas fa-globe-europe"></i>20+</div>
+                        <div class="stat-label">Pays desservis</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><i class="fas fa-medal"></i>98%</div>
+                        <div class="stat-label">Satisfaction clients</div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-image">
+                <div class="tech-badge badge-1">IA & Machine Learning</div>
+                <div class="tech-badge badge-2">Cloud Computing</div>
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Équipe FIA-CG">
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section services" id="services">
+        <div class="section-title">
+            <h2>Nos Services</h2>
+            <p>Des solutions complètes pour répondre à tous vos besoins technologiques</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Solutions d'IA sur mesure</h3>
+                    <p>Développement et intégration de systèmes d'intelligence artificielle adaptés à vos processus métiers pour automatisation et prise de décision intelligente.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Machine Learning</span>
+                        <span class="tech-tag">Deep Learning</span>
+                        <span class="tech-tag">NLP</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-chart-network"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Analyse de données avancée</h3>
+                    <p>Exploitation de vos données pour en extraire des insights actionnables et des prévisions précises grâce à nos outils analytiques puissants.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Big Data</span>
+                        <span class="tech-tag">BI</span>
+                        <span class="tech-tag">Predictive Analytics</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Infrastructure Cloud</h3>
+                    <p>Migration, gestion et optimisation de vos infrastructures cloud pour une flexibilité, une évolutivité et une sécurité maximales.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">AWS</span>
+                        <span class="tech-tag">Azure</span>
+                        <span class="tech-tag">Google Cloud</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-shield-virus"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Cybersécurité</h3>
+                    <p>Protection complète de vos systèmes et données contre les cybermenaces avec nos solutions de sécurité avancées et audits réguliers.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Pentesting</span>
+                        <span class="tech-tag">SOC</span>
+                        <span class="tech-tag">GDPR</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Automatisation intelligente</h3>
+                    <p>Automatisation de vos processus métiers grâce à la combinaison de RPA (Robotic Process Automation) et d'IA pour une efficacité maximale.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">RPA</span>
+                        <span class="tech-tag">Workflow</span>
+                        <span class="tech-tag">BPM</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="service-content">
+                    <h3>Développement d'applications</h3>
+                    <p>Conception et développement d'applications mobiles et web sur mesure, combinant design intuitif et technologies de pointe.</p>
+                    <div class="tech-tags">
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Flutter</span>
+                        <span class="tech-tag">Node.js</span>
+                    </div>
+                    <a href="#" class="learn-more">En savoir plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Showcase Section -->
+    <section class="section ai-showcase" id="ai">
+        <div class="section-title">
+            <h2>Nos Solutions IA</h2>
+            <p>Découvrez comment notre expertise en intelligence artificielle peut transformer votre entreprise</p>
+        </div>
+        <div class="ai-features">
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>Vision par ordinateur</h3>
+                <p>Solutions avancées d'analyse d'images et de vidéos pour la reconnaissance faciale, l'inspection qualité et bien plus encore.</p>
+            </div>
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Traitement du langage</h3>
+                <p>Chatbots intelligents, analyse de sentiment et traitement automatique de documents pour automatiser vos interactions textuelles.</p>
+            </div>
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Prédiction & Forecasting</h3>
+                <p>Modèles prédictifs pour anticiper les tendances du marché, la demande clients et optimiser vos stocks et ressources.</p>
+            </div>
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3>Optimisation industrielle</h3>
+                <p>Algorithmes d'optimisation pour améliorer vos chaînes de production, logistique et gestion des ressources.</p>
+            </div>
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3>Détection d'anomalies</h3>
+                <p>Surveillance intelligente pour détecter fraudes, intrusions ou comportements anormaux en temps réel.</p>
+            </div>
+            <div class="ai-feature">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <h3>Edge AI</h3>
+                <p>Déploiement de modèles d'IA directement sur les appareils pour des applications temps réel sans dépendance cloud.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section class="section partners">
+        <div class="section-title">
+            <h2>Nos Partenaires</h2>
+            <p>Nous collaborons avec les leaders technologiques pour vous offrir les meilleures solutions</p>
+        </div>
+        <div class="partners-grid">
+            <img src="assets/img/ecocapital.png" alt="Ecocapital" class="partner-logo">
+            <img src="assets/img/logo.jpg" alt="GPI" class="partner-logo">
+            <img src="assets/img/agc.jpg" alt="AGC-VIE" class="partner-logo">
+            <img src="assets/img/elikia.ico" alt="Elikia" class="partner-logo">
+            <img src="assets/img/nav-logo_1.png" alt="FIA" class="partner-logo">
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="section" id="products">
+        <div class="section-title">
+            <h2>Nos Produits Phares</h2>
+            <p>Des solutions logicielles prêtes à l'emploi pour accélérer votre transformation digitale</p>
+        </div>
+        <div class="products-grid">
+            <div class="product-card">
+                <div class="product-badge">Nouveau</div>
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="FIA Analytics Pro">
+                </div>
+                <div class="product-content">
+                    <h3>FIA Analytics Pro</h3>
+                    <p>Plateforme tout-en-un d'analyse de données avec tableaux de bord personnalisables, rapports automatiques et outils de prédiction intégrés.</p>
+                    <div class="product-meta">
+                        <div class="product-price">299€<span>/mois</span></div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Essai gratuit</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1415&q=80" alt="FIA Secure Suite">
+                </div>
+                <div class="product-content">
+                    <h3>FIA Secure Suite</h3>
+                    <p>Suite complète de sécurité informatique avec protection en temps réel, détection des menaces et conformité réglementaire automatisée.</p>
+                    <div class="product-meta">
+                        <div class="product-price">499€<span>/mois</span></div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Essai gratuit</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-badge">Best-seller</div>
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="FIA ERP Solution">
+                </div>
+                <div class="product-content">
+                    <h3>FIA ERP Solution</h3>
+                    <p>Système de gestion intégré modulaire pour optimiser toutes les opérations de votre entreprise sur une plateforme unifiée et intelligente.</p>
+                    <div class="product-meta">
+                        <div class="product-price">Sur devis</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Demander une démo</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="FIA CRM Elite">
+                </div>
+                <div class="product-content">
+                    <h3>FIA CRM Elite</h3>
+                    <p>Solution de gestion de la relation client avec automation du marketing, analyse prédictive et outils de vente intelligents.</p>
+                    <div class="product-meta">
+                        <div class="product-price">199€<span>/mois</span></div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Essai gratuit</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1415&q=80" alt="FIA Secure Suite">
+                </div>
+                <div class="product-content">
+                    <h3>FIA Secure Suite</h3>
+                    <p>Suite complète de sécurité informatique avec protection en temps réel, détection des menaces et conformité réglementaire automatisée.</p>
+                    <div class="product-meta">
+                        <div class="product-price">499€<span>/mois</span></div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Essai gratuit</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-badge">Best-seller</div>
+                <div class="product-image">
+                    <img src="https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="FIA ERP Solution">
+                </div>
+                <div class="product-content">
+                    <h3>FIA ERP Solution</h3>
+                    <p>Système de gestion intégré modulaire pour optimiser toutes les opérations de votre entreprise sur une plateforme unifiée et intelligente.</p>
+                    <div class="product-meta">
+                        <div class="product-price">Sur devis</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Demander une démo</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section testimonials">
+        <div class="section-title">
+            <h2>Ils nous font confiance</h2>
+            <p>Découvrez ce que nos clients disent de notre collaboration</p>
+        </div>
+        <div class="testimonial-slider">
+            <div class="testimonial active">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Jean Dupont" class="testimonial-avatar">
+                <p class="testimonial-text">FIA-CG a transformé notre façon de travailler. Leur solution ERP a réduit nos temps de traitement de 40% et amélioré notre précision de manière significative. Leur équipe a fait preuve d'un professionnalisme remarquable tout au long du projet.</p>
+                <p class="testimonial-author">Jean Dupont</p>
+                <p class="testimonial-position">Directeur Général, Entreprise XYZ</p>
+            </div>
+            <div class="testimonial">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Marie Lambert" class="testimonial-avatar">
+                <p class="testimonial-text">Le service client de FIA-CG est exceptionnel. Ils ont répondu à tous nos besoins avec professionnalisme et rapidité. Leur solution d'analyse de données a complètement transformé notre prise de décision stratégique.</p>
+                <p class="testimonial-author">Marie Lambert</p>
+                <p class="testimonial-position">Directrice Marketing, Société ABC</p>
+            </div>
+            <div class="testimonial">
+                <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Thomas Moreau" class="testimonial-avatar">
+                <p class="testimonial-text">Leur expertise en sécurité informatique nous a protégé contre plusieurs attaques potentielles. Nous dormons mieux depuis que nous travaillons avec FIA-CG. Leur approche proactive est vraiment appréciable.</p>
+                <p class="testimonial-author">Thomas Moreau</p>
+                <p class="testimonial-position">DSI, Groupe 123</p>
+            </div>
+            <div class="testimonial-nav">
+                <div class="testimonial-dot active" data-slide="0"></div>
+                <div class="testimonial-dot" data-slide="1"></div>
+                <div class="testimonial-dot" data-slide="2"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="section map-section">
+        <div id="map"></div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact" id="contact">
+        <div class="section-title">
+            <h2>Contactez-nous</h2>
+            <p>Prêt à transformer votre entreprise? Parlons de votre projet</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-info">
+                <h3>Discutons de votre projet</h3>
+                <p>Que vous ayez une question sur nos services ou que vous souhaitiez discuter d'un projet spécifique, notre équipe est là pour vous aider à trouver la meilleure solution.</p>
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h4>Notre siège social</h4>
+                            <p>123 Rue de l'Innovation, 75000 Paris, France</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h4>Téléphone</h4>
+                            <p>+237 654 48 45 24 <br> +242 06 826 38 66</p>
+                            <p>Lun-Ven: 9h-18h</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-text">
+                            <h4>Email</h4>
+                            <p>contact@fia-cg.com</p>
+                            <p>Support: support@fia-cg.com</p>
+                        </div>
+                    </div>
+                </div>
+                <h4>Suivez-nous</h4>
+                <br>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="contact-form">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Nom complet *</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Téléphone</label>
+                        <input type="tel" id="phone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Sujet *</label>
+                        <input type="text" id="subject" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message *</label>
+                        <textarea id="message" class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Envoyer le message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>FIA-CG</h3>
+                <p>Leader en solutions technologiques et intelligentes pour les entreprises. Nous combinons expertise technique et vision stratégique pour transformer vos défis en opportunités.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Solutions</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Intelligence Artificielle</a></li>
+                    <li><a href="#">Analyse de données</a></li>
+                    <li><a href="#">Solutions Cloud</a></li>
+                    <li><a href="#">Cybersécurité</a></li>
+                    <li><a href="#">Développement logiciel</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Entreprise</h3>
+                <ul class="footer-links">
+                    <li><a href="#">À propos de nous</a></li>
+                    <li><a href="#">Carrières</a></li>
+                    <li><a href="#">Actualités</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Événements</a></li>
+                </ul>
+            </div>
+            <div class="footer-col footer-newsletter">
+                <h3>Newsletter</h3>
+                <p>Abonnez-vous à notre newsletter pour recevoir les dernières actualités et offres spéciales.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Votre email" class="form-control" required>
+                    <button type="submit">S'abonner</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2023 FIA-CG. Tous droits réservés.</p>
+            <div class="footer-legal-links">
+                <a href="#">Confidentialité</a>
+                <a href="#">Conditions d'utilisation</a>
+                <a href="#">Cookies</a>
+                <a href="#">Mentions légales</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <div class="back-to-top" id="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navLinks = document.getElementById('nav-links');
+
+        mobileMenu.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Header Scroll Effect
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth Scrolling for Anchor Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (this.getAttribute('href') === '#') return;
+                
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Close mobile menu if open
+                    navLinks.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        });
+
+        // Scroll Down Button
+        const scrollDown = document.getElementById('scroll-down');
+        if (scrollDown) {
+            scrollDown.addEventListener('click', () => {
+                window.scrollTo({
+                    top: document.getElementById('about').offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // Back to Top Button
+        const backToTop = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('active');
+            } else {
+                backToTop.classList.remove('active');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Testimonial Slider
+        const testimonials = document.querySelectorAll('.testimonial');
+        const dots = document.querySelectorAll('.testimonial-dot');
+        let currentTestimonial = 0;
+        let testimonialInterval;
+
+        function showTestimonial(index) {
+            testimonials.forEach(testimonial => testimonial.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            testimonials[index].classList.add('active');
+            dots[index].classList.add('active');
+            currentTestimonial = index;
+        }
+
+        function startTestimonialInterval() {
+            testimonialInterval = setInterval(() => {
+                currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+                showTestimonial(currentTestimonial);
+            }, 6000);
+        }
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const slideIndex = parseInt(this.getAttribute('data-slide'));
+                showTestimonial(slideIndex);
+                clearInterval(testimonialInterval);
+                startTestimonialInterval();
+            });
+        });
+
+        startTestimonialInterval();
+
+        // Animate service cards on scroll
+        const serviceCards = document.querySelectorAll('.service-card');
+        
+        function animateOnScroll() {
+            serviceCards.forEach((card, index) => {
+                const cardPosition = card.getBoundingClientRect().top;
+                const screenPosition = window.innerHeight / 1.3;
+                
+                if (cardPosition < screenPosition) {
+                    setTimeout(() => {
+                        card.classList.add('animated');
+                    }, index * 150);
+                }
+            });
+        }
+
+        window.addEventListener('scroll', animateOnScroll);
+        window.addEventListener('load', animateOnScroll);
+
+        // Form submission
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Merci pour votre message! Nous vous contacterons bientôt.');
+                this.reset();
+            });
+        }
+
+        // AI Elements Animation in Hero
+        const aiElementsContainer = document.getElementById('ai-elements');
+        
+        function createAIElements() {
+            // Clear existing elements
+            aiElementsContainer.innerHTML = '';
+            
+            // Create nodes
+            for (let i = 0; i < 15; i++) {
+                const node = document.createElement('div');
+                node.className = 'ai-node';
+                node.style.left = `${Math.random() * 100}%`;
+                node.style.top = `${Math.random() * 100}%`;
+                node.style.width = `${Math.random() * 6 + 4}px`;
+                node.style.height = node.style.width;
+                node.style.animationDelay = `${Math.random() * 2}s`;
+                node.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                aiElementsContainer.appendChild(node);
+            }
+            
+            // Create connections
+            for (let i = 0; i < 8; i++) {
+                const connection = document.createElement('div');
+                connection.className = 'ai-connection';
+                connection.style.left = `${Math.random() * 80 + 10}%`;
+                connection.style.top = `${Math.random() * 80 + 10}%`;
+                connection.style.width = `${Math.random() * 200 + 100}px`;
+                connection.style.height = connection.style.width;
+                connection.style.animationDelay = `${Math.random() * 2}s`;
+                connection.style.animationDuration = `${Math.random() * 4 + 4}s`;
+                aiElementsContainer.appendChild(connection);
+            }
+        }
+
+        createAIElements();
+
+        // Initialize Map
+        function initMap() {
+            const map = L.map('map').setView([48.8566, 2.3522], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            L.marker([48.8566, 2.3522]).addTo(map)
+                .bindPopup('FIA-CG<br>Siège social')
+                .openPopup();
+        }
+
+        // Initialize Particles
+        function initParticles() {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 80,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": "#00C896"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        },
+                        "polygon": {
+                            "nb_sides": 5
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.3,
+                        "random": false,
+                        "anim": {
+                            "enable": false,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": false,
+                            "speed": 40,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#00C896",
+                        "opacity": 0.2,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 2,
+                        "direction": "none",
+                        "random": false,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                        "attract": {
+                            "enable": false,
+                            "rotateX": 600,
+                            "rotateY": 1200
+                        }
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 1
+                            }
+                        },
+                        "bubble": {
+                            "distance": 400,
+                            "size": 40,
+                            "duration": 2,
+                            "opacity": 8,
+                            "speed": 3
+                        },
+                        "repulse": {
+                            "distance": 200,
+                            "duration": 0.4
+                        },
+                        "push": {
+                            "particles_nb": 4
+                        },
+                        "remove": {
+                            "particles_nb": 2
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            initParticles();
+        });
+    </script>
+</body>
+</html>
